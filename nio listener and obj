@@ -1,0 +1,149 @@
+package com.jp.filemonitor;
+
+import com.amazonaws.AmazonClientException;
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.ClientConfiguration;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardWatchEventKinds;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class ResourceListener {
+    private static ExecutorService fixedThreadPool = Executors.newCachedThreadPool();
+    private WatchService ws;
+    private String listenerPath;
+    private ResourceListener(String path) {
+        try {
+            ws = FileSystems.getDefault().newWatchService();
+            this.listenerPath = path;
+            start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void start() {
+        fixedThreadPool.execute(new Listner(ws,this.listenerPath));
+    }
+
+    public static void addListener(String path) throws IOException {
+        ResourceListener resourceListener = new ResourceListener(path);
+        Path p = Paths.get(path);
+        p.register(resourceListener.ws,StandardWatchEventKinds.ENTRY_MODIFY,
+            StandardWatchEventKinds.ENTRY_DELETE,
+            StandardWatchEventKinds.ENTRY_CREATE);
+    }
+    
+
+    public static void main(String[] args) throws IOException {
+        ResourceListener.addListener("F:\\");
+        ResourceListener.addListener("d:\\");
+    }
+}
+
+class Listner implements Runnable {
+    private WatchService service;
+    private String rootPath;
+    
+    public Listner(WatchService service,String rootPath) {
+        this.service = service;
+        this.rootPath = rootPath;
+    }
+
+    public void run() {
+        try {
+            while(true){
+                WatchKey watchKey = service.take();
+                List<WatchEvent<?>> watchEvents = watchKey.pollEvents();
+                for(WatchEvent<?> event : watchEvents){
+                
+                    //TODO 根据事件类型采取不同的操作。。。。。。。
+                    System.out.println("["+rootPath+event.context()+"]文件发生了["+event.kind()+"]事件"+    event.count()); 
+                    String bucketName = "leiguangyu";
+                    String filePath   = rootPath+event.context();
+                    String accessKey = "FB456B978403960510E1";
+                    String secretKey = "W0ZDNUQ5MDRBN0FGMTUwMzFCRkE3RkI5QkQxQjc1MzZCNjQwRDc5QkRd";
+                    String serviceEndpoint =
+                      "http://scuts3.depts.bingosoft.net:29999";
+
+                      private final static String signingRegion = ""; 
+                    if(event.kind()==ENTRY_CREATE)
+                    {
+                    final BasicAWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
+                    final ClientConfiguration ccfg = new ClientConfiguration().
+                     withUseExpectContinue(false);
+
+                    final EndpointConfiguration endpoint = new EndpointConfiguration(serviceEndpoint, signingRegion);
+
+                  final AmazonS3 s3 = AmazonS3ClientBuilder.standard()
+                  .withCredentials(new AWSStaticCredentialsProvider(credentials))
+                  .withClientConfiguration(ccfg)
+                  .withEndpointConfiguration(endpoint)
+                  .withPathStyleAccessEnabled(true)
+                  .build();
+
+                   System.out.format("Uploading %s to S3 bucket %s...\n", filePath, bucketName);
+                   final String keyName = Paths.get(filePath).getFileName().toString();
+                   final File file = new File(filePath);
+
+                   for (int i = 0; i < 2; i++) {
+                   try {
+                  s3.putObject(bucketName, keyName, file);
+                   break;
+                 } catch (AmazonServiceException e) {
+                if (e.getErrorCode().equalsIgnoreCase("NoSuchBucket")) {
+                    s3.createBucket(bucketName);
+                    continue;
+                }
+
+                System.err.println(e.toString());
+                System.exit(1);
+            } catch (AmazonClientException e) {
+                try {
+                    // detect bucket whether exists
+                    s3.getBucketAcl(bucketName);
+                } catch (AmazonServiceException ase) {
+                    if (ase.getErrorCode().equalsIgnoreCase("NoSuchBucket")) {
+                        s3.createBucket(bucketName);
+                        continue;
+                    }
+                } catch (Exception ignore) {
+                }
+
+                System.err.println(e.toString());
+                System.exit(1);
+                }
+            }
+        }
+
+        System.out.println("Done!");
+                }
+                watchKey.reset();
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }finally{
+            System.out.println("fdsfsdf");
+            try {
+                service.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        
+    }
+}
