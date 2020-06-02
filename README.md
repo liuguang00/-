@@ -12,3 +12,8 @@ Navicat这样的自助查询分析器工具，更加方便使用大数据集群�
 6.1
 实操5.对于像把图片进行脱敏的操作，隐藏信息，可以开发funcation，，跟SQL一起使用。
 实操6.在Spark计算框架怎么去实现多表、多维度的数据分析。
+
+6.2
+下载maven，创建本地仓库  MavenRepository 配置 maven 环境变量 IDEA新建Module
+更换镜像源
+使用IDEA创建springboot
