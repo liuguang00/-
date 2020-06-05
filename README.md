@@ -20,3 +20,6 @@ Navicat这样的自助查询分析器工具，更加方便使用大数据集群�
 
 6.3
 spring整合spark
+
+6.4
+springboot获取数据库，表，字段信息。
