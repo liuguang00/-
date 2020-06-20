@@ -1,1 +1,7 @@
-2
+1.准备train.csv,test.csv
+2.读取train数据
+3.特征提取
+4.训练随机森林模型
+5.读取test数据
+6.模型预测test
+7.输出result文件
