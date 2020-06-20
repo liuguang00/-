@@ -1,1 +1,7 @@
-1
+data文件夹下有训练集train.csv,测试集test.csv
+
+运行house_price.py
+
+生成回归预测文件result.csv
+
+
